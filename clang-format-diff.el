@@ -61,17 +61,8 @@
   :type 'boolean
   :group 'clang-format-diff)
 
-(defun clang-format-diff-cleanup ()
-  "Close buffer"
-  (remove-hook 'ediff-quit-hook 'clang-format-diff-cleanup)
-  (ediff-cleanup-mess)
-  (kill-buffer "*clang-format-diff-buffer*")
-  )
-
 (defun clang-format-diff-view-region (char-start char-end)
   "Apply clang-format to selected region and merge the result by ediff"
-  ;; (interactive
-  ;;  (list (region-beginning) (region-end)))
   (interactive
    (if (use-region-p)
        (list (region-beginning) (region-end))
@@ -104,9 +95,9 @@
       (if clang-format-diff-enable-buffer-mode
           (with-current-buffer temp-buffer
             (c++-mode)))
-      (add-hook 'ediff-quit-hook 'clang-format-diff-cleanup)
-      (ediff-buffers (current-buffer) temp-buffer))
-      ))
+      (ediff-buffers (current-buffer) temp-buffer)
+      )
+    ))
 
 (defun clang-format-diff-view ()
   "Apply clang-format to current buffer and merge the result by ediff"
@@ -117,4 +108,16 @@
     (clang-format-diff-view-region (region-beginning) (region-end))))
 
 (global-set-key "\M-[" 'clang-format-diff-view)
+
+(defvar clang-format-diff-ediff-last-windows nil)
+
+(defun clang-format-diff-store-pre-ediff-winconfig ()
+  (setq clang-format-diff-ediff-last-windows (current-window-configuration)))
+
+(defun clang-format-diff-restore-pre-ediff-winconfig ()
+  (set-window-configuration clang-format-diff-ediff-last-windows))
+
+(add-hook 'ediff-before-setup-hook #'clang-format-diff-store-pre-ediff-winconfig)
+(add-hook 'ediff-quit-hook #'clang-format-diff-restore-pre-ediff-winconfig)
+
 (provide 'clang-format-diff)
