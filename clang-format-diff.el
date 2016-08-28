@@ -51,6 +51,11 @@
   :type 'string
   :group 'clang-format-diff)
 
+(defcustom clang-format-diff-clang-options nil
+  "options to clang-format"
+  :type 'string
+  :group 'clang-format-diff)
+
 (defun clang-format-diff-cleanup ()
   "Close buffer"
   (remove-hook 'ediff-quit-hook 'clang-format-diff-cleanup)
@@ -65,7 +70,7 @@
                  (executable-find "clang-format"))))
     (let ((temp-buffer (generate-new-buffer "*clang-format-diff-buffer*")))
       (call-process-region (point-min) (point-max)
-                           exe nil temp-buffer nil)
+                           exe nil temp-buffer nil clang-format-diff-clang-options)
       ;; force to apply c++-mode to colorize buffer
       (with-current-buffer temp-buffer
         (c++-mode))
