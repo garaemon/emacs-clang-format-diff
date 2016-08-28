@@ -68,21 +68,53 @@
   (kill-buffer "*clang-format-diff-buffer*")
   )
 
-(defun clang-format-diff-view ()
-  "Apply clang-format to current buffer and merge the result by ediff"
-  (interactive)
-  (let ((exe (or clang-format-diff-clang-executable
+(defun clang-format-diff-view-region (char-start char-end)
+  "Apply clang-format to selected region and merge the result by ediff"
+  ;; (interactive
+  ;;  (list (region-beginning) (region-end)))
+  (interactive
+   (if (use-region-p)
+       (list (region-beginning) (region-end))
+     (list (point) (point))))
+
+  (let ((start (1- (position-bytes char-start)))
+        (end (1- (position-bytes char-end)))
+        (cursor (1- (position-bytes (point))))
+        (temp-buffer (get-buffer-create "*clang-format-diff-buffer*"))
+        (exe (or clang-format-diff-clang-executable
                  (executable-find "clang-format"))))
-    (message exe)
-    (let ((temp-buffer (generate-new-buffer "*clang-format-diff-buffer*")))
-      (apply #'call-process-region (point-min) (point-max)
-                           exe nil temp-buffer nil clang-format-diff-clang-options)
-      ;; force to apply c++-mode to colorize buffer
+    (with-current-buffer temp-buffer
+      (erase-buffer))
+    (let (status stderr operations)
+      (setq status
+            (apply #'call-process-region
+                   (point-min) (point-max) exe
+                   nil temp-buffer nil
+                   ;;"-assume-filename" (or (buffer-file-name) "")
+                   "-offset" (number-to-string start)
+                   "-length" (number-to-string (- end start))
+                   "-cursor" (number-to-string cursor)
+                   clang-format-diff-clang-options))
+      ;; temp-buffer has '{ "Cursor": 50, "IncompleteFormat": false }'
+      ;; at the top.
+      (with-current-buffer temp-buffer
+        (delete-region (progn (goto-line 1) (beginning-of-line) (point))
+                       (progn (goto-line 2) (beginning-of-line) (point))))
+                       ;;(progn (end-of-line) (point))))
       (if clang-format-diff-enable-buffer-mode
           (with-current-buffer temp-buffer
             (c++-mode)))
       (add-hook 'ediff-quit-hook 'clang-format-diff-cleanup)
       (ediff-buffers (current-buffer) temp-buffer))
-    ))
+      ))
 
+(defun clang-format-diff-view ()
+  "Apply clang-format to current buffer and merge the result by ediff"
+  (interactive)
+  (message "use-region-p: %s" (use-region-p))
+  (if (not (use-region-p))
+      (clang-format-diff-view-region (point-min) (point-max))
+    (clang-format-diff-view-region (region-beginning) (region-end))))
+
+(global-set-key "\M-[" 'clang-format-diff-view)
 (provide 'clang-format-diff)
