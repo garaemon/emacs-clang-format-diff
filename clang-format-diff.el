@@ -47,22 +47,22 @@
   :group 'ediff)
 
 (defcustom clang-format-diff-clang-executable nil
-  "path to clang-format executable"
+  "Path to clang-format executable."
   :type 'string
   :group 'clang-format-diff)
 
 (defcustom clang-format-diff-clang-options nil
-  "options to clang-format"
+  "Options for clang-format."
   :type 'string
   :group 'clang-format-diff)
 
 (defcustom clang-format-diff-enable-buffer-mode t
-  "Use c++-mode to colorize buffer which clang-format applied"
+  "Use c++-mode to colorize buffer which clang-format applied."
   :type 'boolean
   :group 'clang-format-diff)
 
 (defun clang-format-diff-view-region (char-start char-end)
-  "Apply clang-format to selected region and merge the result by ediff"
+  "Apply clang-format to selected region and merge the result by ediff."
   (interactive
    (if (use-region-p)
        (list (region-beginning) (region-end))
@@ -131,3 +131,4 @@
 (add-hook 'ediff-quit-hook #'clang-format-diff-restore-pre-ediff-winconfig)
 
 (provide 'clang-format-diff)
+;;; clang-format-diff.el ends here
