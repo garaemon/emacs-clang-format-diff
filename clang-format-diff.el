@@ -95,12 +95,22 @@
       (if clang-format-diff-enable-buffer-mode
           (with-current-buffer temp-buffer
             (c++-mode)))
-      (ediff-buffers (current-buffer) temp-buffer)
+      ;; check difference between two buffer first
+      (if (clang-format-diff-have-difference (current-buffer) temp-buffer)
+          (ediff-buffers (current-buffer) temp-buffer)
+        (message "No need to fix! Have a good luck!"))
       )
     ))
 
+(defun clang-format-diff-have-difference (buffer-a buffer-b)
+  "Return true if two buffer has difference."
+  (not (string= (with-current-buffer buffer-a
+                  (buffer-string))
+                (with-current-buffer buffer-b
+                  (buffer-string)))))
+
 (defun clang-format-diff-view ()
-  "Apply clang-format to current buffer and merge the result by ediff"
+  "Apply clang-format to current buffer and merge the result by ediff."
   (interactive)
   (message "use-region-p: %s" (use-region-p))
   (if (not (use-region-p))
